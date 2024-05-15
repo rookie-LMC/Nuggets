@@ -35,7 +35,7 @@ debug_num = 100000
 stock_black_list = []
 words_black_list = ['st', 'ST', 'sT', 'St', '房', '酒']
 concept_black_list = []
-industry_black_list = ['房地产服务', '房地产开发', '酿酒行业']
+industry_black_list = ['房地产服务', '房地产开发', '酿酒行业', '食品饮料', '教育']
 
 #### 召回
 # 流通股本
@@ -102,9 +102,13 @@ select_stock_circulating_stock = []
 for i in range(min(len(stocks_code), debug_num)):
     print('**** load stock_circulate : ', stocks_code[i][0])
     circulating_stock = ak.stock_individual_info_em(stocks_code[i][0]).iloc[7, 1]
-    time.sleep(1)
-    if (circulating_stock <= circulating_stock_max):
-        select_stock_circulating_stock.append(stocks_code[i][0])
+    time.sleep(0.5)
+    if (circulating_stock == '-'): continue
+    try:
+        if (circulating_stock <= circulating_stock_max):
+            select_stock_circulating_stock.append(stocks_code[i][0])
+    except:
+        print('**** has no stock_circulate : ', stocks_code[i][0])
 
 stocks_code = [i for i in stocks_code if i[0] in select_stock_circulating_stock]
 print('**** 02 过滤 流通股份 个股数量 : ', len(stocks_code), ', 流通股份30亿以下数量: ',
@@ -121,7 +125,7 @@ for i in range(min(len(stocks_code), debug_num)):
     stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily")
     stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly")
     stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly")
-    time.sleep(1)
+    time.sleep(0.5)
 print('*' * 50 + ' 03 召回数据完毕')
 
 '''
@@ -179,13 +183,21 @@ for i in range(min(len(stocks_code), debug_num)):
     df.set_index("date", inplace=True)
     df[str(mean_times)] = df.close.rolling(mean_times).mean()
     mean_250, close = df.iloc[-1, 5], df.iloc[-1, 1]
+    if (mean_250 == '-' or close == '-'): continue
 
-    if (close >= mean_250 and close <= close_max):
-        select_mean_250_up_stock.append(stocks_code[i][0])
+    try:
+        if (close >= mean_250 and close <= close_max):
+            select_mean_250_up_stock.append(stocks_code[i][0])
+    except:
+        print('**** has no mean : ', stocks_code[i][0])
+
 stocks_code = [i for i in stocks_code if i[0] in select_mean_250_up_stock]
 print('**** 04 策略 250日均线+股价30 个股数量 : ', len(stocks_code))
 print('*' * 50 + ' 04 策略 250日均线+股价30')
 
+'''
+筛选结果
+'''
 print('*' * 50 + ' 筛选结果')
 for i in range(len(stocks_code)):
     print(stocks_code[i][0], stocks_code[i][1])
