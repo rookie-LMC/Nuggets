@@ -30,6 +30,7 @@ pd.set_option('display.max_colwidth', 1000)
 
 #### 全局变量
 debug_num = 100000
+sleep_time = 0.1
 
 #### 过滤
 stock_black_list = []
@@ -102,7 +103,7 @@ select_stock_circulating_stock = []
 for i in range(min(len(stocks_code), debug_num)):
     print('**** load stock_circulate : ', stocks_code[i][0])
     circulating_stock = ak.stock_individual_info_em(stocks_code[i][0]).iloc[7, 1]
-    time.sleep(0.5)
+    time.sleep(sleep_time)
     if (circulating_stock == '-'): continue
     try:
         if (circulating_stock <= circulating_stock_max):
@@ -125,7 +126,7 @@ for i in range(min(len(stocks_code), debug_num)):
     stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily")
     stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly")
     stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly")
-    time.sleep(0.5)
+    time.sleep(sleep_time)
 print('*' * 50 + ' 03 召回数据完毕')
 
 '''
