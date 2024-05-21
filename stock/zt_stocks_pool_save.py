@@ -16,6 +16,6 @@ from datetime import datetime, timedelta
 # yesterday = trade_date[n1 - 2]
 # print(today, yesterday)
 
-yesterday='20240517'
+yesterday='20240520'
 df = ak.stock_zt_pool_em(yesterday)
 df.to_excel('./zt_stocks_pool/zt_pool_' + yesterday + '.xlsx', sheet_name='A-stocks')

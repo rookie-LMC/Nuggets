@@ -223,6 +223,6 @@ for i in range(len(stocks_code)):
 '''
 保存结果
 '''
-with open('./select_result/' + str(action_date), 'w') as f:
+with open('./select_stock_result/' + str(action_date), 'w') as f:
     for i in range(len(stocks_code)):
         f.write(export_select_stocks(stocks_code[i][0], stocks_code[i][1]) + '\n')

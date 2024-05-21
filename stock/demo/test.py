@@ -4,6 +4,6 @@ a=['1','2']
 
 
 
-with open('./select_result/' + str(action_date), 'w') as f:
+with open('./select_stock_result/' + str(action_date), 'w') as f:
     for i in a:
         f.write(i + '\n')
