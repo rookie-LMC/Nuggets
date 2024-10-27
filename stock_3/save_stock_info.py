@@ -1,16 +1,43 @@
+'''
+akshare API
+https://akshare.akfamily.xyz/data/stock/stock.html
+
+简单选股脚本
+https://blog.csdn.net/qq_46363011/article/details/128764258
+'''
+
 import time
-import pandas as pd
 import akshare as ak
+import numpy as np
+from numpy import empty
+import pandas as pd
+import datetime as dt
 
-#### 过滤
-stock_black_list = []
-words_black_list = ['st', 'ST', 'sT', 'St', '酒']
-concept_black_list = []
-# industry_black_list = ['房地产服务', '房地产开发', '酿酒行业', '食品饮料', '教育']
-industry_black_list = []
+# 处理时间
+from dateutil.parser import parse
+from datetime import datetime, timedelta
+from chinese_calendar import is_workday, is_holiday
 
-debug_num = 100000
+from utils_stock import *
+
+'''
+全局参数
+'''
+debug_num = 200000000
 sleep_time_day_week_month_info = 0.25
+action_date = dt.date.today()
+start_date = '20220101'
+'''
+过滤
+'''
+# 关键词黑名单
+words_black_list = ['st', 'ST', 'sT', 'St']
+# 行业黑名单
+industry_black_list = []
+# 概念黑名单
+concept_black_list = []
+# 股票黑名单
+stock_black_list = []
 
 '''
 01 a股股票列表
@@ -66,9 +93,8 @@ for name in industry_black_list:
 stocks_code = [i for i in stocks_code if i[0] not in stock_black_list]
 print('**** 02 过滤后 个股数量 : ', len(stocks_code), ', 过滤数量: ', len(stock_black_list))
 
-print(stocks_code)
-# save_date = ''
-# df.to_excel('./save_stock/zt_pool_' + save_date + '.xlsx', sheet_name='A-stocks')
+# print(stocks_code)
+
 
 '''
 03 召回
@@ -80,13 +106,16 @@ for i in range(min(len(stocks_code), debug_num)):
     try:
         print('**** load K line : ', stocks_code[i][0])
         stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily",
-                                                            start_date='20220101')
+                                                            start_date=start_date)
         stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly",
-                                                             start_date='20220101')
+                                                             start_date=start_date)
         stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly",
-                                                              start_date='20220101')
+                                                              start_date=start_date)
+
+        export_A_stocks(stock_daily[stocks_code[i][0]], stock_weekly[stocks_code[i][0]],
+                        stock_monthly[stocks_code[i][0]],
+                        action_date, stocks_code[i][0])
         time.sleep(sleep_time_day_week_month_info)
     except:
         print('**** has no day week month K line: ', stocks_code[i][0])
 print('*' * 50 + ' 03 召回数据完毕')
-
