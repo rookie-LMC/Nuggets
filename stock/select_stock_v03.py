@@ -42,9 +42,11 @@ concept_black_list = []
 industry_black_list = []
 
 #### 召回
-# 流通股本
+target_start, target_end = '2024-02-01', '2024-05-30'
 zt_days, zt_thres = 65, 9.9
-circulating_stock_max = 100000000 * 30
+circulating_stock_max = 100000000 * 30  # 流通股本
+mean_times = 30
+close_price_max = 30
 
 '''
 01 a股股票列表
@@ -103,21 +105,21 @@ print('**** 02 过滤后 个股数量 : ', len(stocks_code), ', 过滤数量: ',
 '''
 02 过滤 流通股份要在30亿以下
 '''
-select_stock_circulating_stock = []
-for i in range(min(len(stocks_code), debug_num)):
-    try:
-        print('**** load stock_circulate : ', stocks_code[i][0])
-        circulating_stock = ak.stock_individual_info_em(stocks_code[i][0]).iloc[7, 1]
-        time.sleep(sleep_time_circulating)
-        if (circulating_stock == '-'): continue
-        if (circulating_stock <= circulating_stock_max):
-            select_stock_circulating_stock.append(stocks_code[i][0])
-    except:
-        print('**** has no stock_circulate : ', stocks_code[i][0])
-
-stocks_code = [i for i in stocks_code if i[0] in select_stock_circulating_stock]
-print('**** 02 过滤 流通股份 个股数量 : ', len(stocks_code), ', 流通股份30亿以下数量: ',
-      len(set(select_stock_circulating_stock)))
+# select_stock_circulating_stock = []
+# for i in range(min(len(stocks_code), debug_num)):
+#     try:
+#         print('**** load stock_circulate : ', stocks_code[i][0])
+#         circulating_stock = ak.stock_individual_info_em(stocks_code[i][0]).iloc[7, 1]
+#         time.sleep(sleep_time_circulating)
+#         if (circulating_stock == '-'): continue
+#         if (circulating_stock <= circulating_stock_max):
+#             select_stock_circulating_stock.append(stocks_code[i][0])
+#     except:
+#         print('**** has no stock_circulate : ', stocks_code[i][0])
+#
+# stocks_code = [i for i in stocks_code if i[0] in select_stock_circulating_stock]
+# print('**** 02 过滤 流通股份 个股数量 : ', len(stocks_code), ', 流通股份30亿以下数量: ',
+#       len(set(select_stock_circulating_stock)))
 
 '''
 03 召回
@@ -128,9 +130,12 @@ stock_daily, stock_weekly, stock_monthly = {}, {}, {}
 for i in range(min(len(stocks_code), debug_num)):
     try:
         print('**** load K line : ', stocks_code[i][0])
-        stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily", start_date='20220101')
-        stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly", start_date='20220101')
-        stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly", start_date='20220101')
+        stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily",
+                                                            start_date='20220101')
+        stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly",
+                                                             start_date='20220101')
+        stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly",
+                                                              start_date='20220101')
         time.sleep(sleep_time_day_week_month_info)
     except:
         print('**** has no day week month K line: ', stocks_code[i][0])
@@ -143,18 +148,20 @@ https://zhuanlan.zhihu.com/p/669747150
 '''
 print('*' * 50 + ' 04 策略 月线三根筛选')
 select_stock_three_K_monthly = []
-target_start, target_end = '2024-02-01', '2024-05-30'
 rename_columns = ['date', 'open', 'close', 'high', 'low', 'volume']
 for i in range(min(len(stocks_code), debug_num)):
-    stock_df_3_k_m = stock_monthly[stocks_code[i][0]].iloc[:, :6]
-    stock_df_3_k_m.columns = rename_columns
-    stock_df_3_k_m.index = pd.to_datetime(stock_df_3_k_m['date'])
-    stock_df_3_k_m = stock_df_3_k_m[target_start: target_end]
-    # print(stock_df_3_k_m)
-    # print('*' * 20)
+    try:
+        stock_df_3_k_m = stock_monthly[stocks_code[i][0]].iloc[:, :6]
+        stock_df_3_k_m.columns = rename_columns
+        stock_df_3_k_m.index = pd.to_datetime(stock_df_3_k_m['date'])
+        stock_df_3_k_m = stock_df_3_k_m[target_start: target_end]
+        # print(stock_df_3_k_m)
+        # print('*' * 20)
 
-    if selector_of_three_K_monthly(stock_df_3_k_m, stocks_code[i][0], 1, 2):
-        select_stock_three_K_monthly.append(stocks_code[i][0])
+        if selector_of_three_K_monthly(stock_df_3_k_m, stocks_code[i][0], 1, 2):
+            select_stock_three_K_monthly.append(stocks_code[i][0])
+    except:
+        print('**** has no 04 策略 月线三根 个股数量 : ', stocks_code[i][0])
 stocks_code = [i for i in stocks_code if i[0] in select_stock_three_K_monthly]
 print('**** 04 策略 月线三根 个股数量 : ', len(stocks_code))
 print('*' * 50 + ' 04 策略 月线三根筛选完毕')
@@ -166,37 +173,35 @@ print('*' * 50 + ' 04 策略 月线三根筛选完毕')
 # select_stock_K_monthly_limit = []
 # target_start, target_end = '2024-05-01', '2024-05-31'
 
+
 '''
-04 策略 股票要在250日均线上运行,且低于30。
+04 策略 股票要在指定日均线上运行,且低于30。
 '''
-print('*' * 50 + ' 04 策略 250日均线+股价30')
-select_mean_250_up_stock = []
+print('*' * 50 + ' 04 策略 ' + str(mean_times) + '日均线+股价30')
+select_mean_time_up_stock = []
 rename_columns = ['date', 'open', 'close', 'high', 'low', 'volume']
-mean_times = 120
-close_max = 30
 for i in range(min(len(stocks_code), debug_num)):
-    df = stock_daily[stocks_code[i][0]].iloc[:, :6]
-    df.columns = rename_columns
-    df = df.iloc[-1 * mean_times:, :6]
-
-    if (len(df['date'].values) < mean_times): continue
-
-    df['date'] = pd.to_datetime(df['date'])
-    df.set_index("date", inplace=True)
-    df[str(mean_times)] = df.close.rolling(mean_times).mean()
-    mean_250, close = df.iloc[-1, 5], df.iloc[-1, 1]
-    if (mean_250 == '-' or close == '-'): continue
-
     try:
-        # if (close >= mean_250 and close <= close_max):
-        if (close >= mean_250):
-            select_mean_250_up_stock.append(stocks_code[i][0])
+        df = stock_daily[stocks_code[i][0]].iloc[:, :6]
+        df.columns = rename_columns
+        df = df.iloc[-1 * mean_times:, :6]
+
+        if (len(df['date'].values) < mean_times): continue
+
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index("date", inplace=True)
+        df[str(mean_times)] = df.close.rolling(mean_times).mean()
+        mean_time_val, close = df.iloc[-1, 5], df.iloc[-1, 1]
+        if (mean_time_val == '-' or close == '-'): continue
+        # if (close >= mean_time_val and close <= close_price_max):
+        if (close >= mean_time_val):
+            select_mean_time_up_stock.append(stocks_code[i][0])
     except:
         print('**** has no mean : ', stocks_code[i][0])
 
-stocks_code = [i for i in stocks_code if i[0] in select_mean_250_up_stock]
-print('**** 04 策略 250日均线+股价30 个股数量 : ', len(stocks_code))
-print('*' * 50 + ' 04 策略 250日均线+股价30')
+stocks_code = [i for i in stocks_code if i[0] in select_mean_time_up_stock]
+print('**** 04 策略 ' + str(mean_times) + '指定日均线+股价30 个股数量 : ', len(stocks_code))
+print('*' * 50 + ' 04 策略 ' + str(mean_times) + '日均线+股价30')
 
 '''
 04 策略 过去65天出现过涨停
@@ -206,8 +211,8 @@ https://blog.csdn.net/qq_26742269/article/details/122824457
 print('*' * 50 + ' 04 策略 过去65天出现过涨停')
 select_stock_65_zt = []
 for i in range(min(len(stocks_code), debug_num)):
-    df = stock_daily[stocks_code[i][0]].iloc[-1 * zt_days:, -3]
     try:
+        df = stock_daily[stocks_code[i][0]].iloc[-1 * zt_days:, -3]
         if (len(df) != zt_days): continue
         if (max(df) > zt_thres): select_stock_65_zt.append(stocks_code[i][0])
     except:
@@ -226,6 +231,6 @@ for i in range(len(stocks_code)):
 '''
 保存结果
 '''
-# with open('./select_stock_result/' + str(action_date), 'w') as f:
-#     for i in range(len(stocks_code)):
-#         f.write(export_select_stocks(stocks_code[i][0], stocks_code[i][1]) + '\n')
+with open('./select_stock_result/' + str(action_date), 'w') as f:
+    for i in range(len(stocks_code)):
+        f.write(export_select_stocks(stocks_code[i][0], stocks_code[i][1]) + '\n')
