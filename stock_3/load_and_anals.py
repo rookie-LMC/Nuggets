@@ -23,10 +23,14 @@ from utils_stock import *
 '''
 全局参数
 '''
-debug_num = 200000000
-sleep_time_day_week_month_info = 0.25
-action_date = dt.date.today()
+debug_num = 20000000
+sleep_time_day_week_month_info = 0.3
+# action_date = dt.date.today()
+action_date = '2024-11-04'
 start_date = '20230101'
+mean_times_1 = 19
+mean_times_2 = 5
+
 '''
 过滤
 '''
@@ -93,8 +97,6 @@ for name in industry_black_list:
 stocks_code = [i for i in stocks_code if i[0] not in stock_black_list]
 print('**** 02 过滤后 个股数量 : ', len(stocks_code), ', 过滤数量: ', len(stock_black_list))
 
-# print(stocks_code)
-
 
 '''
 03 召回
@@ -104,18 +106,44 @@ print('*' * 50 + ' 03 召回数据')
 stock_daily, stock_weekly, stock_monthly = {}, {}, {}
 for i in range(min(len(stocks_code), debug_num)):
     try:
-        print('**** load K line : ', stocks_code[i][0])
-        stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily",
-                                                            start_date=start_date)
-        stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly",
-                                                             start_date=start_date)
-        stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly",
-                                                              start_date=start_date)
+        # print('**** load K line : ', stocks_code[i][0])
 
-        export_A_stocks(stock_daily[stocks_code[i][0]], stock_weekly[stocks_code[i][0]],
-                        stock_monthly[stocks_code[i][0]],
-                        action_date, stocks_code[i][0])
-        time.sleep(sleep_time_day_week_month_info)
+        stock_daily[stocks_code[i][0]], stock_weekly[stocks_code[i][0]], stock_monthly[stocks_code[i][0]] = load_stocks(
+            action_date, stocks_code[i][0], field='A')
+        # print('**** load day week month K line: ', stocks_code[i][0])
+        # print(stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']])
+        # print(stock_weekly[stocks_code[i][0]][['日期', '收盘', '成交量']])
+        # print(stock_monthly[stocks_code[i][0]][['日期', '收盘', '成交量']])
     except:
         print('**** has no day week month K line: ', stocks_code[i][0])
 print('*' * 50 + ' 03 召回数据完毕')
+
+for i in range(min(len(stocks_code), debug_num)):
+    try:
+        stock_data = stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']]
+
+        df_1 = stock_data.iloc[-1 * mean_times_1:, :6]
+        mean_times_max_val_1 = df_1['收盘'].max()
+        mean_times_turnover_1 = df_1['成交量'].mean()
+
+        df_2 = stock_data.iloc[-1 * mean_times_2:, :6]
+        mean_times_max_val_2 = df_2['收盘'].max()
+        mean_times_turnover_2 = df_2['成交量'].mean()
+
+        last_val = stock_data.iloc[-1, 1]
+        last_turnover = stock_data.iloc[-1, 2]
+
+        c_val_1 = last_val / mean_times_max_val_1 > 0.9
+        c_val_2 = last_val / mean_times_max_val_1 < 1.1
+        c_val_3 = last_val / mean_times_max_val_2 > 0.9
+        c_val_4 = last_val / mean_times_max_val_2 < 1.1
+
+        c_turnover_1 = last_turnover / mean_times_turnover_1 > 1.3
+        c_turnover_2 = last_turnover / mean_times_turnover_2 > 0.0
+
+        # is_target = c_val_1 and c_val_2 and c_val_3 and c_val_4 and c_turnover_1 and c_turnover_2
+        is_target = c_turnover_1 and c_turnover_2
+        if (is_target):
+            print("股票筛选: ", stocks_code[i][0], stocks_code[i][1])
+    except:
+        print('**** has no stock data K line: ', stocks_code[i][0])
