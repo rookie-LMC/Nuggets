@@ -1,11 +1,3 @@
-'''
-akshare API
-https://akshare.akfamily.xyz/data/stock/stock.html
-
-简单选股脚本
-https://blog.csdn.net/qq_46363011/article/details/128764258
-'''
-
 import time
 import akshare as ak
 import numpy as np
@@ -20,19 +12,14 @@ from chinese_calendar import is_workday, is_holiday
 
 from utils_stock import *
 
-'''
-全局参数
-'''
-debug_num = 20000000
-# action_date = dt.date.today()
-action_date = '2024-11-04'
+## 全局参数
+debug_num = 200000000
+sleep_time_day_week_month_info = 0.25
+action_date = dt.date.today()
 start_date = '20230101'
-mean_times_1 = 19
-mean_times_2 = 5
+save_file = 'stock_A_2024_12_12'
 
-'''
-过滤
-'''
+## 过滤
 # 关键词黑名单
 words_black_list = ['st', 'ST', 'sT', 'St']
 # 行业黑名单
@@ -42,9 +29,7 @@ concept_black_list = []
 # 股票黑名单
 stock_black_list = []
 
-'''
-01 a股股票列表
-'''
+## a股股票列表
 stock_list = ak.stock_zh_a_spot_em()
 stock_symbol = stock_list['代码'].values
 stock_name = stock_list['名称'].values
@@ -52,9 +37,7 @@ stocks_code = list(zip(stock_symbol, stock_name))
 # export_A_stocks(stock_list, action_date)
 print('**** 01 股票共计:', len(stocks_code))
 
-'''
-02 过滤 关键字
-'''
+## 过滤 关键字
 for i in range(len(stocks_code)):
     tmp_symbol, tmp_name = stocks_code[i][0], stocks_code[i][1]
     for word in words_black_list:
@@ -64,9 +47,7 @@ for i in range(len(stocks_code)):
 stock_black_list = list(set(stock_black_list))
 print('**** 02 过滤 关键字 数量: ', len(stock_black_list))
 
-'''
-02 过滤 概念
-'''
+## 过滤 概念
 concept_list = ak.stock_board_concept_name_em()
 # 检查概念是否存在
 for name in concept_black_list:
@@ -77,9 +58,7 @@ for name in concept_black_list:
     print('**** 02 过滤 概念: ', name, ': ', len(concept_stocks['代码'].values))
     stock_black_list = list(set(stock_black_list) | set(concept_stocks['代码'].values))
 
-'''
-02 过滤 行业
-'''
+## 过滤 行业
 industry_list = ak.stock_board_industry_name_em()
 # 检查行业是否存在
 for name in industry_black_list:
@@ -90,59 +69,28 @@ for name in industry_black_list:
     print('**** 02 过滤 行业: ', name, ': ', len(industry_stock['代码'].values))
     stock_black_list = list(set(stock_black_list) | set(industry_stock['代码'].values))
 
-'''
-02 过滤 执行
-'''
+## 过滤 执行
 stocks_code = [i for i in stocks_code if i[0] not in stock_black_list]
 print('**** 02 过滤后 个股数量 : ', len(stocks_code), ', 过滤数量: ', len(stock_black_list))
 
-
-'''
-03 召回
-个股日线、周线、月线
-'''
+## 保存数据
+# 个股日线、周线、月线
 print('*' * 50 + ' 03 召回数据')
 stock_daily, stock_weekly, stock_monthly = {}, {}, {}
 for i in range(min(len(stocks_code), debug_num)):
     try:
-        # print('**** load K line : ', stocks_code[i][0])
+        print('**** load K line : ', stocks_code[i][0])
+        stock_daily[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="daily",
+                                                            start_date=start_date)
+        stock_weekly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="weekly",
+                                                             start_date=start_date)
+        stock_monthly[stocks_code[i][0]] = ak.stock_zh_a_hist(stocks_code[i][0], adjust="qfq", period="monthly",
+                                                              start_date=start_date)
 
-        stock_daily[stocks_code[i][0]], stock_weekly[stocks_code[i][0]], stock_monthly[stocks_code[i][0]] = load_stocks(
-            action_date, stocks_code[i][0], field='A')
-        # print('**** load day week month K line: ', stocks_code[i][0])
-        # print(stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']])
-        # print(stock_weekly[stocks_code[i][0]][['日期', '收盘', '成交量']])
-        # print(stock_monthly[stocks_code[i][0]][['日期', '收盘', '成交量']])
+        export_stocks(save_file, stock_daily[stocks_code[i][0]], stock_weekly[stocks_code[i][0]],
+                      stock_monthly[stocks_code[i][0]],
+                      action_date, stocks_code[i][0])
+        time.sleep(sleep_time_day_week_month_info)
     except:
         print('**** has no day week month K line: ', stocks_code[i][0])
 print('*' * 50 + ' 03 召回数据完毕')
-
-for i in range(min(len(stocks_code), debug_num)):
-    try:
-        stock_data = stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']]
-
-        df_1 = stock_data.iloc[-1 * mean_times_1:, :6]
-        mean_times_max_val_1 = df_1['收盘'].max()
-        mean_times_turnover_1 = df_1['成交量'].mean()
-
-        df_2 = stock_data.iloc[-1 * mean_times_2:, :6]
-        mean_times_max_val_2 = df_2['收盘'].max()
-        mean_times_turnover_2 = df_2['成交量'].mean()
-
-        last_val = stock_data.iloc[-1, 1]
-        last_turnover = stock_data.iloc[-1, 2]
-
-        c_val_1 = last_val / mean_times_max_val_1 > 0.9
-        c_val_2 = last_val / mean_times_max_val_1 < 1.1
-        c_val_3 = last_val / mean_times_max_val_2 > 0.9
-        c_val_4 = last_val / mean_times_max_val_2 < 1.1
-
-        c_turnover_1 = last_turnover / mean_times_turnover_1 > 1.3
-        c_turnover_2 = last_turnover / mean_times_turnover_2 > 0.0
-
-        # is_target = c_val_1 and c_val_2 and c_val_3 and c_val_4 and c_turnover_1 and c_turnover_2
-        is_target = c_turnover_1 and c_turnover_2
-        if (is_target):
-            print("股票筛选: ", stocks_code[i][0], stocks_code[i][1])
-    except:
-        print('**** has no stock data K line: ', stocks_code[i][0])
