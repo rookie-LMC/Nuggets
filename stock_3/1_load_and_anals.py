@@ -13,7 +13,7 @@ from chinese_calendar import is_workday, is_holiday
 from utils_stock import *
 
 ## 全局参数
-debug_num = 500000
+debug_num = 200000000000
 # action_date = dt.date.today()
 action_date = '2024-12-11'
 save_file = 'stock_A_2024_12_11'
@@ -129,8 +129,9 @@ def is_upward_trend(fir_low, sec_low, thr_low):
     return fir_low < sec_low and sec_low < thr_low
 
 
-def month_pos_neg_pos(df, stock_num, month_line_mode=4):
+def month_pos_neg_pos_up_trend(df, stock_num, month_line_mode=4):
     # print(len(df))
+    # 月线数量小于month_line_mode
     if len(df) < month_line_mode:
         print('月线数量不足: ', stock_num, ', month_line_mode: ', month_line_mode)
 
@@ -138,23 +139,23 @@ def month_pos_neg_pos(df, stock_num, month_line_mode=4):
     if month_line_mode == 4:
         # 第一个月
         fir_stat = is_pos_line(df.iloc[-4, 1], df.iloc[-4, 2])
-        # 第一个月
+        # 第二个月
         sec_stat = is_neg_line(df.iloc[-3, 1], df.iloc[-3, 2])
-        # 第一个月
+        # 第三个月
         thr_stat = is_pos_line(df.iloc[-2, 1], df.iloc[-2, 2])
         # 上升趋势
-        is_upward_trend(df.iloc[-4, 3], df.iloc[-3, 3], df.iloc[-2, 3])
+        trend_stat = is_upward_trend(df.iloc[-4, 3], df.iloc[-3, 3], df.iloc[-2, 3])
     if month_line_mode == 3:
         # 第一个月
         fir_stat = is_pos_line(df.iloc[-3, 1], df.iloc[-3, 2])
-        # 第一个月
+        # 第二个月
         sec_stat = is_neg_line(df.iloc[-2, 1], df.iloc[-2, 2])
-        # 第一个月
+        # 第三个月
         thr_stat = is_pos_line(df.iloc[-1, 1], df.iloc[-1, 2])
         # 上升趋势
-        is_upward_trend(df.iloc[-3, 3], df.iloc[-2, 3], df.iloc[-1, 3])
+        trend_stat = is_upward_trend(df.iloc[-3, 3], df.iloc[-2, 3], df.iloc[-1, 3])
 
-    return fir_stat and sec_stat and thr_stat and is_upward_trend
+    return fir_stat and sec_stat and thr_stat and trend_stat
 
 
 def in_up_critical(df_day, df_month, critical_thres, month_line_mode=4):
@@ -164,8 +165,10 @@ def in_up_critical(df_day, df_month, critical_thres, month_line_mode=4):
         month_val = max(df_month.iloc[-4, 1], df_month.iloc[-3, 1], df_month.iloc[-2, 1])
     if month_line_mode == 3:
         month_val = max(df_month.iloc[-3, 1], df_month.iloc[-2, 1], df_month.iloc[-1, 1])
+    print(month_val)
 
-    return day_val / month_val > critical_thres
+    # 最近一天收盘价 / 3根月线的最高价, 判断是否多头临界
+    return day_val / month_val > critical_thres and day_val / month_val <= 1.0
 
 
 select_stocks_code_list = []
@@ -179,14 +182,14 @@ for i in range(min(len(stocks_code), debug_num)):
         judger_2 = less_than_target_price(stock_daily[stocks_code[i][0]][['日期', '收盘']],
                                           30)
         # 65天内有过涨停
-        judger_3 = has_limit_up_in_n_days(stock_daily[stocks_code[i][0]][['日期', '收盘']],
-                                          65)
+        judger_3 = has_limit_up_in_n_days(stock_daily[stocks_code[i][0]][['日期', '涨跌幅']],
+                                          65, 9.9)
         # 月线至少看3根，两阳夹一阴，上升趋势的双阳夹阴
-        judger_4 = month_pos_neg_pos(stock_monthly[stocks_code[i][0]][['日期', '收盘', '开盘', '最低']],
-                                     stocks_code[i][0],
-                                     month_line_mode=3)
+        judger_4 = month_pos_neg_pos_up_trend(stock_monthly[stocks_code[i][0]][['日期', '收盘', '开盘', '最低']],
+                                              stocks_code[i][0],
+                                              month_line_mode=3)
         # 多头临界
-        judger_5 = in_up_critical(stock_daily[stocks_code[i][0]][['日期', '最高']],
+        judger_5 = in_up_critical(stock_daily[stocks_code[i][0]][['日期', '收盘']],
                                   stock_monthly[stocks_code[i][0]][['日期', '最高']],
                                   0.95,
                                   month_line_mode=3)
