@@ -12,7 +12,7 @@ from chinese_calendar import is_workday, is_holiday
 
 from utils_stock import *
 
-debug_num = 2
+debug_num = 20000000000000000
 # action_date = dt.date.today()
 action_date = '2024-12-16'
 save_file = 'stock_A_2024_12_16'
@@ -83,11 +83,12 @@ for name in list(concept_list['板块名称']):
             stocks_code_industry_concept[stocks_code[i][0]][1].append(name)
 
 print('*' * 20 + ' 明细情况')
+print('*' * 20 + ' 分析日期: ', action_date, ', 读取文件夹', save_file)
 for i in range(min(len(stocks_code), debug_num)):
     print(stocks_code[i][0], stocks_code[i][1],
-          stocks_code_industry_concept[stocks_code[i][0]][0],
-          stocks_code_industry_concept[stocks_code[i][0]][1],
-          stocks_code_industry_concept[stocks_code[i][0]][2])
+          ' , 涨跌幅: ', stocks_code_industry_concept[stocks_code[i][0]][2],
+          ' , 行业: ', stocks_code_industry_concept[stocks_code[i][0]][0],
+          ' , 概念: ', stocks_code_industry_concept[stocks_code[i][0]][1])
 
 print('*' * 20 + ' 胜率情况')
 win_num = len([1 for i in win_rate_list if i > 0])
