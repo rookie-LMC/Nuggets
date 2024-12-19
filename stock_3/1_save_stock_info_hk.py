@@ -17,7 +17,7 @@ debug_num = 200000000
 sleep_time_day_week_month_info = 0.3
 action_date = dt.date.today()
 start_date = '20230101'
-save_file = 'stock_HK_2024_12_16'
+save_file = 'stock_HK_2024_12_19'
 
 ## 港股通成份股
 stock_list = ak.stock_hk_ggt_components_em()

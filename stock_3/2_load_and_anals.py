@@ -15,8 +15,8 @@ from utils_stock import *
 ## 全局参数
 debug_num = 200000000000
 # action_date = dt.date.today()
-action_date = '2024-12-13'
-save_file = 'stock_A_2024_12_13'
+action_date = '2024-12-18'
+save_file = 'stock_A_2024_12_18'
 
 ## 过滤
 # 关键词黑名单
@@ -167,12 +167,12 @@ def in_up_critical(df_day, df_month, critical_thres_low, critical_thres_high, mo
         month_val = max(df_month.iloc[-3, 1], df_month.iloc[-2, 1], df_month.iloc[-1, 1])
 
     # 最近一天收盘价 / 3根月线的最高价, 判断是否多头临界
-    return day_val / month_val >= critical_thres_low and day_val / month_val <= critical_thres_high
+    return day_val / month_val >= critical_thres_low and day_val / month_val <= critical_thres_high, day_val / month_val
 
 
-select_stocks_code_list = []
+select_stocks_code_with_thres = []
 month_line_mode = 4
-critical_thres_low, critical_thres_high = 0.97, 0.9999999
+critical_thres_low, critical_thres_high = 0.95, 1.05
 for i in range(min(len(stocks_code), debug_num)):
     try:
         # stock_data = stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']]
@@ -190,21 +190,22 @@ for i in range(min(len(stocks_code), debug_num)):
                                               stocks_code[i][0],
                                               month_line_mode)
         # 多头临界
-        judger_5 = in_up_critical(stock_daily[stocks_code[i][0]][['日期', '收盘']],
-                                  stock_monthly[stocks_code[i][0]][['日期', '最高']],
-                                  critical_thres_low,
-                                  critical_thres_high,
-                                  month_line_mode)
+        judger_5, critical_rate = in_up_critical(stock_daily[stocks_code[i][0]][['日期', '收盘']],
+                                                 stock_monthly[stocks_code[i][0]][['日期', '最高']],
+                                                 critical_thres_low,
+                                                 critical_thres_high,
+                                                 month_line_mode)
 
         if judger_1 and judger_2 and judger_3 and judger_4 and judger_5:
             print('满足筛选条件: ', stocks_code[i])
-            select_stocks_code_list.append(stocks_code[i])
+            select_stocks_code_with_thres.append([stocks_code[i], critical_rate])
     except:
         print('**** has no stock data K line: ', stocks_code[i][0])
 
 print('*' * 50)
 print('*' * 20 + ' 分析日期: ', action_date, ', 读取文件夹', save_file, ', 月线模式:', month_line_mode)
 print('*' * 20 + ' 满足筛选条件的票', ', 多头临界区间', critical_thres_low, '~', critical_thres_high)
-print(select_stocks_code_list)
-for i in select_stocks_code_list:
-    print(i[0], i[1])
+select_stocks_code_with_thres.sort(key=lambda x: x[1], reverse=True)
+print([i[0] for i in select_stocks_code_with_thres])
+for i in select_stocks_code_with_thres:
+    print(i[0][0], i[0][1], i[1])
