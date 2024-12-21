@@ -15,8 +15,8 @@ from utils_stock import *
 ## 全局参数
 debug_num = 2000000000
 # action_date = dt.date.today()
-action_date = '2024-12-18'
-save_file = 'stock_HK_2024_12_18'
+action_date = '2024-12-19'
+save_file = 'stock_HK_2024_12_19'
 
 ## 港股通成份股
 stock_list = ak.stock_hk_ggt_components_em()

@@ -15,8 +15,8 @@ from utils_stock import *
 ## 全局参数
 debug_num = 200000000000
 # action_date = dt.date.today()
-action_date = '2024-12-18'
-save_file = 'stock_A_2024_12_18'
+action_date = '2024-12-19'
+save_file = 'stock_A_2024_12_19'
 
 ## 过滤
 # 关键词黑名单
