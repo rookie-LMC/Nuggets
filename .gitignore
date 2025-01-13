@@ -34,3 +34,5 @@ ENV/
 *.sublime-workspace
 *.sublime-project
 
+stock_HK_202*/
+stock_A_202*/
