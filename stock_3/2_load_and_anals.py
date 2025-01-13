@@ -15,8 +15,8 @@ from utils_stock import *
 ## 全局参数
 debug_num = 200000000000
 # action_date = dt.date.today()
-action_date = '2024-12-19'
-save_file = 'stock_A_2024_12_19'
+action_date = '2025-01-02'
+save_file = 'stock_A_2025_01_02'
 
 ## 过滤
 # 关键词黑名单
@@ -171,17 +171,18 @@ def in_up_critical(df_day, df_month, critical_thres_low, critical_thres_high, mo
 
 
 select_stocks_code_with_thres = []
-month_line_mode = 4
+month_line_mode = 3
 critical_thres_low, critical_thres_high = 0.95, 1.05
 for i in range(min(len(stocks_code), debug_num)):
     try:
         # stock_data = stock_daily[stocks_code[i][0]][['日期', '收盘', '成交量']]
         # 股价在250日均线上
-        judger_1 = greater_than_n_days_mean_price(stock_daily[stocks_code[i][0]][['日期', '收盘']],
-                                                  250)
+        judger_1 = True
+        # judger_1 = greater_than_n_days_mean_price(stock_daily[stocks_code[i][0]][['日期', '收盘']],
+        #                                           250)
         # 股价在30元以下
         judger_2 = less_than_target_price(stock_daily[stocks_code[i][0]][['日期', '收盘']],
-                                          30)
+                                          10000)
         # 65天内有过涨停
         judger_3 = has_limit_up_in_n_days(stock_daily[stocks_code[i][0]][['日期', '涨跌幅']],
                                           65, 9.9)
