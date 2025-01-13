@@ -23,5 +23,56 @@ index_news_sentiment_scope_df = ak.index_news_sentiment_scope()
 print('数库-A股新闻情绪指数: https://www.chinascope.com/reasearch.html')
 print(index_news_sentiment_scope_df)
 
+# stock_info_global_cls_df = ak.stock_info_cjzc_em()
+stock_info_global_cls_df = ak.stock_info_global_em()
+print(stock_info_global_cls_df.columns)
+print(stock_info_global_cls_df[['标题', '发布时间']])
 
-ak.stock_info_global_cls(symbol="全部")
+
+from datetime import datetime
+
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+
+
+def stock_info_global_em_v1() -> pd.DataFrame:
+    """
+    东方财富-全球财经快讯
+    https://kuaixun.eastmoney.com/7_24.html
+    :return: 全球财经快讯
+    :rtype: pandas.DataFrame
+    """
+    url = "https://np-weblist.eastmoney.com/comm/web/getFastNewsList"
+    params = {
+        "client": "web",
+        "biz": "web_724",
+        "fastColumn": "102",
+        "sortEnd": "",
+        "pageSize": "300",
+        "req_trace": "1710315450384",
+    }
+    r = requests.get(url, params=params)
+    data_json = r.json()
+    print(data_json)
+    temp_df = pd.DataFrame(data_json["data"]["fastNewsList"])
+    temp_df = temp_df[["title", "summary", "showTime", "code", 'titleColor']]
+    temp_df["code"] = [
+        f"https://finance.eastmoney.com/a/{item}.html" for item in temp_df["code"]
+    ]
+    temp_df.rename(
+        columns={
+            "title": "标题",
+            "summary": "摘要",
+            "showTime": "发布时间",
+            "code": "链接",
+            "titleColor": '中'
+        },
+        inplace=True,
+    )
+    return temp_df
+
+stock_info_global_cls_df = stock_info_global_em_v1()
+print(stock_info_global_cls_df.columns)
+print(stock_info_global_cls_df[['标题', '发布时间', '中']])
+
