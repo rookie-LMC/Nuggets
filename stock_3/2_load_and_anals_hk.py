@@ -15,8 +15,8 @@ from utils_stock import *
 ## 全局参数
 debug_num = 2000000000
 # action_date = dt.date.today()
-action_date = '2025-01-02'
-save_file = 'stock_HK_2025_01_02'
+action_date = '2025-01-13'
+save_file = 'stock_HK_2025_01_13'
 
 ## 港股通成份股
 stock_list = ak.stock_hk_ggt_components_em()
@@ -124,7 +124,7 @@ def in_up_critical(df_day, df_month, critical_thres_low, critical_thres_high, mo
 
 
 select_stocks_code_with_thres = []
-month_line_mode = 3
+month_line_mode = 4
 critical_thres_low, critical_thres_high = 0.90, 1.1
 for i in range(min(len(stocks_code), debug_num)):
     try:
@@ -135,10 +135,10 @@ for i in range(min(len(stocks_code), debug_num)):
                                                   250)
         # 股价在30元以下
         judger_2 = less_than_target_price(stock_daily[stocks_code[i][0]][['日期', '收盘']],
-                                          5000)
+                                          50000)
         # 65天内有过涨停
         judger_3 = has_limit_up_in_n_days(stock_daily[stocks_code[i][0]][['日期', '涨跌幅']],
-                                          65, 5.0)
+                                          65, 7.0)
         # 月线至少看3根，两阳夹一阴，上升趋势的双阳夹阴
         judger_4 = True
         # judger_4 = month_pos_neg_pos_up_trend(stock_monthly[stocks_code[i][0]][['日期', '收盘', '开盘', '最低']],

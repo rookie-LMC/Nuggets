@@ -2,7 +2,7 @@ import akshare as ak
 import pandas as pd
 import time
 
-time_sleep = 0.1
+time_sleep = 0.2
 
 
 def get_stocks_code(df, code_col=2, name_col=3):
