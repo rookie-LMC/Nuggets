@@ -4,13 +4,16 @@ import numpy as np
 from numpy import empty
 import pandas as pd
 import datetime as dt
-
+import sys,os
 # 处理时间
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 from chinese_calendar import is_workday, is_holiday
 
+
+sys.path.append(os.path.join('../ak_api_test.py'))
 from utils_stock import *
+from ak_api_test import *
 
 debug_num = 20000000000000000
 # action_date = dt.date.today()
