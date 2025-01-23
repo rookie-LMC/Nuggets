@@ -2,8 +2,8 @@ import akshare as ak
 import datetime as dt
 from utils_cycle import *
 
-save_file = 'daily_limit_up_market'
-trade_date = '20250114'
+save_file = '../01_save_data/A_daily_limit_up_market'
+trade_date = '20250123'
 
 # 东方财富网-行情中心-涨停板行情-涨停股池
 df_zt = ak.stock_zt_pool_em(date=trade_date)
@@ -33,4 +33,4 @@ df_dic = {
     '炸板股池': df_zt_zbgc,
     '跌停股池': df_zt_dtgc
 }
-export_zt(save_file, trade_date, df_dic)
+export_df_dic(save_file, trade_date, df_dic)

@@ -13,6 +13,20 @@ def get_stocks_code(df, code_col=2, name_col=3):
     return stocks_code
 
 
+def get_industry_and_concept_of_stocks_v1(stocks_code, industry_stock,concept_stock,debug_num=20000):
+    stocks_code_industry_concept, num_industry, num_concept = {}, {}, {}
+    for i in range(min(len(stocks_code), debug_num)):
+        st_code, st_name = stocks_code[i][0], stocks_code[i][1]
+        stocks_code_industry_concept[st_code] = [[], [], st_name]
+
+    for name, df in industry_stock.items():
+        print(name)
+        num_industry[name] = len(list(df[['代码']]))
+        for i in range(min(len(stocks_code), debug_num)):
+            st_code, st_name = stocks_code[i][0], stocks_code[i][1]
+
+
+
 def get_industry_and_concept_of_stocks(stocks_code, debug_num=20000):
     industry_list = ak.stock_board_industry_name_em()
     concept_list = ak.stock_board_concept_name_em()
@@ -68,8 +82,9 @@ def group_and_sort(target):
     return industry_dic, concept_dic
 
 
-def export_zt(save_file, trade_date, df_dic):
-    file_path = './' + save_file + '/' + str(trade_date) + '.xlsx'
+def export_df_dic(save_file, trade_date, df_dic):
+    # 一天存一个
+    file_path = save_file + '/' + str(trade_date) + '.xlsx'
     print(file_path)
 
     with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
@@ -77,8 +92,26 @@ def export_zt(save_file, trade_date, df_dic):
             df.to_excel(writer, sheet_name=zt)
 
 
-def load_stocks(save_file, action_date):
-    file_path = './' + save_file + '/' + str(action_date) + '.xlsx'
+def export_df_dic_more(save_file, trade_date, industry_or_concept, df_dic):
+    # 一天存多个
+    file_path = save_file + '/' + str(trade_date) + '-' + str(industry_or_concept) + '.xlsx'
+    print(file_path)
+
+    with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+        for zt, df in df_dic.items():
+            df.to_excel(writer, sheet_name=zt)
+
+
+def export_industry_or_concept_stock(save_file, trade_date, industry_or_concept, df, sheet_name):
+    file_path = save_file + '/' + str(trade_date) + '-' + str(industry_or_concept) + '.xlsx'
+    print(file_path)
+
+    with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name=sheet_name)
+
+
+def load_zt_stocks(save_file, trade_date):
+    file_path = save_file + '/' + str(trade_date) + '.xlsx'
     df_zt = pd.read_excel(file_path, sheet_name='涨停股池', dtype=str)
     print(df_zt.dtypes)
     df_zt_pvs = pd.read_excel(file_path, sheet_name='昨日涨停股池', dtype=str)
@@ -88,3 +121,10 @@ def load_stocks(save_file, action_date):
     df_zt_dtgc = pd.read_excel(file_path, sheet_name='跌停股池', dtype=str)
 
     return df_zt, df_zt_pvs, df_zt_strong, df_zt_sn, df_zt_zbgc, df_zt_dtgc
+
+
+def load_industry_or_concept_stock(save_file, trade_date, industry_or_concept, sheet_name):
+    file_path = save_file + '/' + str(trade_date) + '-' + str(industry_or_concept) + '.xlsx'
+    df = pd.read_excel(file_path, sheet_name=sheet_name, dtype=str)
+
+    return df

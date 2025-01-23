@@ -11,16 +11,20 @@ https://quote.eastmoney.com/ztb/detail#type=ztgc
 6. 跌停股池：包含当日当前跌停的所有A股股票。
 注：涨停板行情专题统计不包含ST股票及科创板股票。
 
-daily_limit_up_market
+A_daily_limit_up_market
 '''
 
 import akshare as ak
 import datetime as dt
 from utils_cycle import *
 
-save_file = 'daily_limit_up_market'
+save_zt_file = '../01_save_data/A_daily_limit_up_market'
+get_date = '20250117'
+save_industry_file = '../01_save_data/industry_stock/' + get_date
+save_concept_file = '../01_save_data/concept_stock/' + get_date
 
-trade_date_list = ['20250114', '20250113', '20250110', '20250109', '20250108', '20250107', '20250106']
+trade_date_list = ['20250117', '20250116', '20250115', '20250114', '20250113', '20250110', '20250109', '20250108',
+                   '20250107', '20250106']
 # trade_date_list = ['20250107']
 
 # # 东方财富网-行情中心-涨停板行情-涨停股池
@@ -37,8 +41,33 @@ trade_date_list = ['20250114', '20250113', '20250110', '20250109', '20250108', '
 # df_zt_dtgc = ak.stock_zt_pool_dtgc_em(date=trade_date)
 
 industry_date, concept_date = {}, {}
+industry_stock, concept_stock = {}, {}
+
+industry_list = ak.stock_board_industry_name_em()
+concept_list = ak.stock_board_concept_name_em()
+
+for name in list(industry_list['板块名称']):
+    try:
+        df = load_industry_or_concept_stock(save_industry_file, get_date, name, 'stock')
+        print('load_industry: ', name)
+        industry_stock[name] = df
+    except:
+        print('load_industry error: ', name)
+
+for name in list(concept_list['板块名称']):
+    try:
+        if name in ('DRG/DIP'):
+            df = load_industry_or_concept_stock(save_concept_file, get_date, 'DRG', 'stock')
+        else:
+            df = load_industry_or_concept_stock(save_concept_file, get_date, name, 'stock')
+
+        concept_stock[name] = df
+        print('load_concept: ', name)
+    except:
+        print('load_concept error: ', name)
+
 for trade_date in trade_date_list:
-    df_zt, df_zt_pvs, df_zt_strong, df_zt_sn, df_zt_zbgc, df_zt_dtgc = load_stocks(save_file, trade_date)
+    df_zt, df_zt_pvs, df_zt_strong, df_zt_sn, df_zt_zbgc, df_zt_dtgc = load_zt_stocks(save_zt_file, trade_date)
 
     # 序号-代码-名称
     df_market = df_zt_strong
